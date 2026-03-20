@@ -20,6 +20,11 @@ Cheker анализирует любую веб-страницу и формир
 | Open Graph | og:title, og:description, og:image |
 | robots.txt | Наличие файла на сервере |
 | sitemap.xml | Наличие карты сайта |
+| Lang | Атрибут `lang` у тега `<html>` |
+| Favicon | Наличие иконки сайта |
+| Structured Data | JSON-LD (Schema.org) блоки |
+| Twitter Card | twitter:card, twitter:title, twitter:description |
+| Heading structure | Корректная иерархия заголовков (h1–h6) |
 
 ## Установка
 
