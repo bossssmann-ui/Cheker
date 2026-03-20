@@ -4,6 +4,8 @@ Cheker — модуль для анализа сайтов на SEO-ошибки
 
 from __future__ import annotations
 
+import json
+import os
 import time
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -11,6 +13,27 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+
+_SESSION_FILE = os.path.join(os.path.expanduser("~"), ".cheker_session.json")
+
+
+def save_session(url: str) -> None:
+    """Сохраняет URL последней сессии в файл."""
+    with open(_SESSION_FILE, "w", encoding="utf-8") as f:
+        json.dump({"last_url": url}, f)
+
+
+def load_session() -> Optional[str]:
+    """Загружает URL последней сессии из файла.
+
+    Возвращает None, если файл не найден, повреждён или не содержит ключ 'last_url'.
+    """
+    try:
+        with open(_SESSION_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("last_url")
+    except (FileNotFoundError, json.JSONDecodeError, KeyError):
+        return None
 
 TIMEOUT = 10  # seconds
 
