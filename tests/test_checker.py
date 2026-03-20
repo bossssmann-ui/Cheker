@@ -23,6 +23,11 @@ from checker import (
     _check_open_graph,
     _check_https,
     _check_load_time,
+    _check_lang,
+    _check_favicon,
+    _check_structured_data,
+    _check_twitter_card,
+    _check_heading_structure,
 )
 from bs4 import BeautifulSoup
 
@@ -303,6 +308,203 @@ class TestCheckLoadTime:
         _check_load_time(5.0, report)
         assert not report.checks[-1].passed
         assert report.checks[-1].level == "error"
+
+
+# ---------------------------------------------------------------------------
+# _check_lang
+# ---------------------------------------------------------------------------
+
+class TestCheckLang:
+    def test_missing_lang(self):
+        soup = make_soup("<html><head></head></html>")
+        report = make_report()
+        _check_lang(soup, report)
+        assert not report.checks[-1].passed
+        assert report.checks[-1].level == "warning"
+
+    def test_empty_lang(self):
+        soup = make_soup('<html lang=""><head></head></html>')
+        report = make_report()
+        _check_lang(soup, report)
+        assert not report.checks[-1].passed
+
+    def test_present_lang(self):
+        soup = make_soup('<html lang="ru"><head></head></html>')
+        report = make_report()
+        _check_lang(soup, report)
+        assert report.checks[-1].passed
+        assert "ru" in report.checks[-1].message
+
+    def test_present_lang_en(self):
+        soup = make_soup('<html lang="en-US"><head></head></html>')
+        report = make_report()
+        _check_lang(soup, report)
+        assert report.checks[-1].passed
+
+
+# ---------------------------------------------------------------------------
+# _check_favicon
+# ---------------------------------------------------------------------------
+
+class TestCheckFavicon:
+    def test_favicon_in_html(self):
+        soup = make_soup(
+            '<html><head><link rel="icon" href="/favicon.ico"></head></html>'
+        )
+        report = make_report()
+        _check_favicon(soup, "https://example.com", report)
+        assert report.checks[-1].passed
+
+    def test_favicon_shortcut_icon(self):
+        soup = make_soup(
+            '<html><head><link rel="shortcut icon" href="/favicon.ico"></head></html>'
+        )
+        report = make_report()
+        _check_favicon(soup, "https://example.com", report)
+        assert report.checks[-1].passed
+
+    @patch("checker.requests.get")
+    def test_favicon_via_http_found(self, mock_get):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_get.return_value = mock_resp
+        soup = make_soup("<html><head></head></html>")
+        report = make_report()
+        _check_favicon(soup, "https://example.com", report)
+        assert report.checks[-1].passed
+
+    @patch("checker.requests.get")
+    def test_favicon_not_found(self, mock_get):
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_get.return_value = mock_resp
+        soup = make_soup("<html><head></head></html>")
+        report = make_report()
+        _check_favicon(soup, "https://example.com", report)
+        assert not report.checks[-1].passed
+        assert report.checks[-1].level == "warning"
+
+
+# ---------------------------------------------------------------------------
+# _check_structured_data
+# ---------------------------------------------------------------------------
+
+class TestCheckStructuredData:
+    def test_missing(self):
+        soup = make_soup("<html><head></head></html>")
+        report = make_report()
+        _check_structured_data(soup, report)
+        assert not report.checks[-1].passed
+        assert report.checks[-1].level == "warning"
+
+    def test_valid_json_ld(self):
+        html = (
+            '<html><head>'
+            '<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite"}</script>'
+            '</head></html>'
+        )
+        soup = make_soup(html)
+        report = make_report()
+        _check_structured_data(soup, report)
+        assert report.checks[-1].passed
+
+    def test_invalid_json_ld(self):
+        html = (
+            '<html><head>'
+            '<script type="application/ld+json">not valid json</script>'
+            '</head></html>'
+        )
+        soup = make_soup(html)
+        report = make_report()
+        _check_structured_data(soup, report)
+        assert not report.checks[-1].passed
+
+    def test_mixed_json_ld(self):
+        html = (
+            '<html><head>'
+            '<script type="application/ld+json">{"@type":"WebSite"}</script>'
+            '<script type="application/ld+json">bad json</script>'
+            '</head></html>'
+        )
+        soup = make_soup(html)
+        report = make_report()
+        _check_structured_data(soup, report)
+        assert not report.checks[-1].passed
+
+
+# ---------------------------------------------------------------------------
+# _check_twitter_card
+# ---------------------------------------------------------------------------
+
+class TestCheckTwitterCard:
+    def test_all_missing(self):
+        soup = make_soup("<html><head></head></html>")
+        report = make_report()
+        _check_twitter_card(soup, report)
+        assert not report.checks[-1].passed
+        assert report.checks[-1].level == "warning"
+
+    def test_all_present(self):
+        html = (
+            '<html><head>'
+            '<meta name="twitter:card" content="summary">'
+            '<meta name="twitter:title" content="Title">'
+            '<meta name="twitter:description" content="Description">'
+            '</head></html>'
+        )
+        soup = make_soup(html)
+        report = make_report()
+        _check_twitter_card(soup, report)
+        assert report.checks[-1].passed
+
+    def test_partial(self):
+        html = (
+            '<html><head>'
+            '<meta name="twitter:card" content="summary">'
+            '</head></html>'
+        )
+        soup = make_soup(html)
+        report = make_report()
+        _check_twitter_card(soup, report)
+        assert not report.checks[-1].passed
+        assert "twitter:title" in report.checks[-1].message
+        assert "twitter:description" in report.checks[-1].message
+
+
+# ---------------------------------------------------------------------------
+# _check_heading_structure
+# ---------------------------------------------------------------------------
+
+class TestCheckHeadingStructure:
+    def test_no_headings(self):
+        soup = make_soup("<html><body><p>text</p></body></html>")
+        report = make_report()
+        _check_heading_structure(soup, report)
+        assert not report.checks[-1].passed
+        assert report.checks[-1].level == "warning"
+
+    def test_correct_structure(self):
+        soup = make_soup(
+            "<html><body><h1>Main</h1><h2>Section</h2><h3>Sub</h3></body></html>"
+        )
+        report = make_report()
+        _check_heading_structure(soup, report)
+        assert report.checks[-1].passed
+
+    def test_skipped_level(self):
+        soup = make_soup(
+            "<html><body><h1>Main</h1><h3>Skipped h2</h3></body></html>"
+        )
+        report = make_report()
+        _check_heading_structure(soup, report)
+        assert not report.checks[-1].passed
+        assert "h1→h3" in report.checks[-1].message
+
+    def test_only_h1(self):
+        soup = make_soup("<html><body><h1>Only heading</h1></body></html>")
+        report = make_report()
+        _check_heading_structure(soup, report)
+        assert report.checks[-1].passed
 
 
 # ---------------------------------------------------------------------------

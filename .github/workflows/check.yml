@@ -1,0 +1,78 @@
+name: Проверка сайта
+
+on:
+  # Запускать вручную: вкладка Actions → «Проверка сайта» → «Run workflow»
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL сайта для проверки (например, pacificstar.ru)'
+        required: true
+        default: 'pacificstar.ru'
+
+  # Автоматически каждый день в 06:00 UTC проверять pacificstar.ru
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  check:
+    name: Анализ сайта
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Получить код репозитория
+        uses: actions/checkout@v4
+
+      - name: Настроить Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Установить зависимости
+        run: pip install -r requirements.txt
+
+      - name: Определить URL
+        id: set-url
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "url=${{ github.event.inputs.url }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "url=pacificstar.ru" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Запустить проверку
+        id: run-check
+        run: |
+          URL="${{ steps.set-url.outputs.url }}"
+          echo "Проверяем: $URL"
+          python cli.py "$URL" --no-color 2>&1 | tee report.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Сохранить результаты в сводку задания
+        run: |
+          URL="${{ steps.set-url.outputs.url }}"
+          echo "## Результаты проверки сайта \`$URL\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat report.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Подготовить имя артефакта
+        id: artifact-name
+        run: |
+          SAFE=$(echo "${{ steps.set-url.outputs.url }}" | tr -cs 'a-zA-Z0-9-' '-' | sed 's/-*$//')
+          echo "name=report-${SAFE}" >> "$GITHUB_OUTPUT"
+
+      - name: Загрузить отчёт как артефакт
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifact-name.outputs.name }}
+          path: report.txt
+          retention-days: 30
+
+      - name: Завершить с кодом проверки
+        run: exit ${{ steps.run-check.outputs.exit_code }}

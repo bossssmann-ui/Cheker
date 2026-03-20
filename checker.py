@@ -348,6 +348,152 @@ def _check_sitemap(soup: BeautifulSoup, base_url: str, report: SiteReport) -> No
         )
 
 
+def _check_lang(soup: BeautifulSoup, report: SiteReport) -> None:
+    """Проверяет наличие атрибута lang у тега <html>."""
+    html_tag = soup.find("html")
+    if not html_tag or not html_tag.get("lang", "").strip():
+        report.add(
+            CheckResult(
+                "lang",
+                False,
+                "Атрибут lang отсутствует у тега <html> (важно для SEO и доступности)",
+                "warning",
+            )
+        )
+    else:
+        lang = html_tag["lang"].strip()
+        report.add(CheckResult("lang", True, f"Атрибут lang задан: «{lang}»"))
+
+
+def _check_favicon(soup: BeautifulSoup, base_url: str, report: SiteReport) -> None:
+    """Проверяет наличие favicon."""
+    # Check <link rel="icon"> or <link rel="shortcut icon"> in HTML
+    icon_tag = soup.find("link", attrs={"rel": ["icon", "shortcut icon"]})
+    if icon_tag and icon_tag.get("href"):
+        report.add(CheckResult("favicon", True, f"Favicon найден в HTML: {icon_tag['href']}"))
+        return
+    # Try standard /favicon.ico path
+    parsed = urlparse(base_url)
+    favicon_url = f"{parsed.scheme}://{parsed.netloc}/favicon.ico"
+    try:
+        resp = requests.get(favicon_url, timeout=TIMEOUT)
+        if resp.status_code == 200:
+            report.add(CheckResult("favicon", True, f"favicon.ico найден: {favicon_url}"))
+        else:
+            report.add(
+                CheckResult("favicon", False, "Favicon не найден", "warning")
+            )
+    except requests.RequestException:
+        report.add(
+            CheckResult("favicon", False, "Не удалось проверить favicon", "warning")
+        )
+
+
+def _check_structured_data(soup: BeautifulSoup, report: SiteReport) -> None:
+    """Проверяет наличие структурированных данных (JSON-LD / Schema.org)."""
+    json_ld_tags = soup.find_all("script", attrs={"type": "application/ld+json"})
+    if not json_ld_tags:
+        report.add(
+            CheckResult(
+                "structured_data",
+                False,
+                "Структурированные данные (JSON-LD) отсутствуют",
+                "warning",
+            )
+        )
+        return
+    valid = 0
+    invalid = 0
+    for tag in json_ld_tags:
+        try:
+            json.loads(tag.string or "")
+            valid += 1
+        except (ValueError, TypeError):
+            invalid += 1
+    if invalid:
+        report.add(
+            CheckResult(
+                "structured_data",
+                False,
+                f"Найдено {valid} валидных и {invalid} невалидных JSON-LD блоков",
+                "warning",
+            )
+        )
+    else:
+        report.add(
+            CheckResult(
+                "structured_data",
+                True,
+                f"Найдено {valid} валидных JSON-LD блоков (Schema.org)",
+            )
+        )
+
+
+def _check_twitter_card(soup: BeautifulSoup, report: SiteReport) -> None:
+    """Проверяет наличие Twitter Card мета-тегов."""
+    card = soup.find("meta", attrs={"name": "twitter:card"})
+    title = soup.find("meta", attrs={"name": "twitter:title"})
+    description = soup.find("meta", attrs={"name": "twitter:description"})
+    missing = []
+    if not card:
+        missing.append("twitter:card")
+    if not title:
+        missing.append("twitter:title")
+    if not description:
+        missing.append("twitter:description")
+    if missing:
+        report.add(
+            CheckResult(
+                "twitter_card",
+                False,
+                f"Отсутствуют Twitter Card теги: {', '.join(missing)}",
+                "warning",
+            )
+        )
+    else:
+        report.add(
+            CheckResult("twitter_card", True, "Основные Twitter Card теги присутствуют")
+        )
+
+
+def _check_heading_structure(soup: BeautifulSoup, report: SiteReport) -> None:
+    """Проверяет корректность иерархии заголовков (h1–h6)."""
+    headings = soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
+    if not headings:
+        report.add(
+            CheckResult(
+                "heading_structure",
+                False,
+                "На странице нет заголовков (h1–h6)",
+                "warning",
+            )
+        )
+        return
+    # Check for skipped levels (e.g. h1 → h3 skips h2)
+    levels = [int(h.name[1]) for h in headings]
+    skips = []
+    for i in range(1, len(levels)):
+        if levels[i] > levels[i - 1] + 1:
+            skips.append(f"h{levels[i - 1]}→h{levels[i]}")
+    if skips:
+        report.add(
+            CheckResult(
+                "heading_structure",
+                False,
+                f"Пропущены уровни заголовков: {', '.join(skips)}",
+                "warning",
+            )
+        )
+    else:
+        report.add(
+            CheckResult(
+                "heading_structure",
+                True,
+                f"Иерархия заголовков корректна ({len(headings)} заголовков)",
+            )
+        )
+
+
 def analyze(url: str) -> SiteReport:
     """
     Анализирует сайт по указанному URL и возвращает SiteReport.
@@ -407,5 +553,10 @@ def analyze(url: str) -> SiteReport:
     _check_open_graph(soup, report)
     _check_robots_txt(response.url, report)
     _check_sitemap(soup, response.url, report)
+    _check_lang(soup, report)
+    _check_favicon(soup, response.url, report)
+    _check_structured_data(soup, report)
+    _check_twitter_card(soup, report)
+    _check_heading_structure(soup, report)
 
     return report
