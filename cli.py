@@ -11,7 +11,7 @@ from __future__ import annotations
 import argparse
 import sys
 
-from checker import analyze, SiteReport, CheckResult
+from checker import analyze, SiteReport, CheckResult, save_session, load_session
 
 
 _GREEN = "\033[32m"
@@ -73,19 +73,38 @@ def main(argv: list[str] | None = None) -> int:
         prog="cheker",
         description="Анализирует сайт на SEO-ошибки и технические проблемы.",
     )
-    parser.add_argument("url", help="URL сайта для проверки (например, https://example.com)")
+    parser.add_argument("url", nargs="?", help="URL сайта для проверки (например, https://example.com)")
     parser.add_argument(
         "--no-color",
         action="store_true",
         default=False,
         help="Отключить цветной вывод",
     )
+    parser.add_argument(
+        "--repeat", "-r",
+        action="store_true",
+        default=False,
+        help="Повторить последнюю сессию (использовать URL из предыдущего запуска)",
+    )
     args = parser.parse_args(argv)
+
+    if args.repeat:
+        last_url = load_session()
+        if last_url is None:
+            print("Ошибка: нет сохранённой сессии для повтора.", file=sys.stderr)
+            return 1
+        url = last_url
+        print(f"Повтор последней сессии: {url}")
+    else:
+        if not args.url:
+            parser.error("укажите URL или используйте --repeat для повтора последней сессии")
+        url = args.url
 
     use_color = not args.no_color and sys.stdout.isatty()
 
-    print(f"Анализируем: {args.url} …")
-    report = analyze(args.url)
+    print(f"Анализируем: {url} …")
+    report = analyze(url)
+    save_session(report.url)
     print_report(report, use_color=use_color)
 
     # Exit with non-zero code if there are errors

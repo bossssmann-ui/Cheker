@@ -12,6 +12,8 @@ from checker import (
     SiteReport,
     CheckResult,
     analyze,
+    save_session,
+    load_session,
     _check_title,
     _check_meta_description,
     _check_h1,
@@ -363,3 +365,69 @@ class TestAnalyze:
         mock_get.return_value = _make_mock_response(url="https://example.com")
         report = analyze("example.com")
         assert report.url.startswith("https://")
+
+
+# ---------------------------------------------------------------------------
+# Session persistence
+# ---------------------------------------------------------------------------
+
+class TestSession:
+    def test_save_and_load(self, tmp_path, monkeypatch):
+        session_file = tmp_path / ".cheker_session.json"
+        monkeypatch.setattr("checker._SESSION_FILE", str(session_file))
+        save_session("https://example.com")
+        assert load_session() == "https://example.com"
+
+    def test_load_missing_file(self, tmp_path, monkeypatch):
+        session_file = tmp_path / ".cheker_session.json"
+        monkeypatch.setattr("checker._SESSION_FILE", str(session_file))
+        assert load_session() is None
+
+    def test_load_corrupt_file(self, tmp_path, monkeypatch):
+        session_file = tmp_path / ".cheker_session.json"
+        session_file.write_text("not valid json", encoding="utf-8")
+        monkeypatch.setattr("checker._SESSION_FILE", str(session_file))
+        assert load_session() is None
+
+    def test_save_overwrites(self, tmp_path, monkeypatch):
+        session_file = tmp_path / ".cheker_session.json"
+        monkeypatch.setattr("checker._SESSION_FILE", str(session_file))
+        save_session("https://first.com")
+        save_session("https://second.com")
+        assert load_session() == "https://second.com"
+
+
+# ---------------------------------------------------------------------------
+# CLI --repeat flag
+# ---------------------------------------------------------------------------
+
+class TestCLIRepeat:
+    @patch("checker.requests.get")
+    def test_repeat_no_session(self, mock_get, tmp_path, monkeypatch, capsys):
+        import cli
+        session_file = tmp_path / ".cheker_session.json"
+        monkeypatch.setattr("checker._SESSION_FILE", str(session_file))
+        result = cli.main(["--repeat"])
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "нет сохранённой сессии" in captured.err
+
+    @patch("checker.requests.get")
+    def test_repeat_uses_last_url(self, mock_get, tmp_path, monkeypatch, capsys):
+        import cli
+        session_file = tmp_path / ".cheker_session.json"
+        monkeypatch.setattr("checker._SESSION_FILE", str(session_file))
+        mock_get.return_value = _make_mock_response()
+        # First run to save session
+        cli.main(["https://example.com", "--no-color"])
+        # Repeat
+        mock_get.return_value = _make_mock_response()
+        result = cli.main(["--repeat", "--no-color"])
+        captured = capsys.readouterr()
+        assert "Повтор последней сессии: https://example.com" in captured.out
+
+    @patch("checker.requests.get")
+    def test_no_url_no_repeat_prints_error(self, mock_get, tmp_path, monkeypatch):
+        import cli
+        with pytest.raises(SystemExit):
+            cli.main([])
