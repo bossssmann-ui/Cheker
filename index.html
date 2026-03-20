@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Title (10–70 chars) -->
+  <title>Cheker — SEO-анализ сайтов онлайн</title>
+
+  <!-- Meta description (50–160 chars) -->
+  <meta name="description" content="Cheker проверяет любой сайт на SEO-ошибки: title, meta description, заголовки, alt, Open Graph, скорость загрузки и многое другое.">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://bossssmann-ui.github.io/Cheker/">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="https://bossssmann-ui.github.io/Cheker/favicon.svg">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Cheker — SEO-анализ сайтов онлайн">
+  <meta property="og:description" content="Cheker проверяет любой сайт на SEO-ошибки: title, meta description, заголовки, alt, Open Graph, скорость загрузки и многое другое.">
+  <meta property="og:url" content="https://bossssmann-ui.github.io/Cheker/">
+  <meta property="og:image" content="https://bossssmann-ui.github.io/Cheker/og-image.png">
+  <meta property="og:locale" content="ru_RU">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Cheker — SEO-анализ сайтов онлайн">
+  <meta name="twitter:description" content="Cheker проверяет любой сайт на SEO-ошибки: title, meta description, заголовки, alt, Open Graph, скорость загрузки и многое другое.">
+  <meta name="twitter:image" content="https://bossssmann-ui.github.io/Cheker/og-image.png">
+
+  <!-- JSON-LD Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Cheker",
+    "description": "Инструмент для проверки сайтов на SEO-ошибки и технические проблемы. Анализирует любую веб-страницу и формирует подробный отчёт с оценкой по 100-балльной шкале.",
+    "url": "https://github.com/bossssmann-ui/Cheker",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Linux, macOS, Windows",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "RUB"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "bossssmann-ui",
+      "url": "https://github.com/bossssmann-ui"
+    },
+    "softwareVersion": "1.0",
+    "license": "https://github.com/bossssmann-ui/Cheker/blob/main/LICENSE",
+    "programmingLanguage": "Python"
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #1a1a2e;
+      background: #f8f9fa;
+      line-height: 1.6;
+    }
+    a { color: #0969da; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Header */
+    header {
+      background: #0969da;
+      color: #fff;
+      padding: 3rem 1rem 2rem;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+    header p {
+      font-size: 1.15rem;
+      opacity: 0.9;
+      max-width: 640px;
+      margin: 0 auto 1.5rem;
+    }
+    .cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-block;
+      padding: 0.65rem 1.5rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.88; text-decoration: none; }
+    .btn-primary { background: #fff; color: #0969da; }
+    .btn-secondary { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.4); }
+
+    /* Main */
+    main { max-width: 960px; margin: 0 auto; padding: 2.5rem 1rem; }
+
+    /* Section */
+    section { margin-bottom: 3rem; }
+    section h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    section h3 { font-size: 1.1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
+
+    /* Check grid */
+    .checks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .check-card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 1rem 1.1rem;
+    }
+    .check-card .icon { font-size: 1.4rem; margin-bottom: 0.4rem; }
+    .check-card h3 { margin: 0 0 0.35rem; font-size: 1rem; }
+    .check-card p { font-size: 0.88rem; color: #555; margin: 0; }
+
+    /* How-to steps */
+    .steps { list-style: none; counter-reset: steps; }
+    .steps li {
+      counter-increment: steps;
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.1rem;
+    }
+    .steps li::before {
+      content: counter(steps);
+      flex-shrink: 0;
+      width: 2rem;
+      height: 2rem;
+      background: #0969da;
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    /* Install block */
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin: 0.75rem 0;
+    }
+
+    /* Result example */
+    .result-block {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      line-height: 1.7;
+    }
+    .ok { color: #a6e3a1; }
+    .warn { color: #f9e2af; }
+    .score { color: #89b4fa; font-weight: bold; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: 0.875rem;
+      color: #666;
+      border-top: 1px solid #e0e0e0;
+    }
+    footer a { color: #0969da; }
+  </style>
+</head>
+<body>
+
+  <!-- ===================== HEADER ===================== -->
+  <header>
+    <h1>Cheker</h1>
+    <p>Бесплатный инструмент для SEO-анализа любого сайта. Проверяет 17 параметров и выдаёт оценку по 100-балльной шкале.</p>
+    <div class="cta-buttons">
+      <a class="btn btn-primary" href="https://github.com/bossssmann-ui/Cheker/actions/workflows/check.yml">
+        Проверить сайт онлайн
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/bossssmann-ui/Cheker">
+        Исходный код на GitHub
+      </a>
+    </div>
+  </header>
+
+  <!-- ===================== MAIN ===================== -->
+  <main>
+
+    <!-- What we check -->
+    <section id="checks" aria-labelledby="checks-heading">
+      <h2 id="checks-heading">Что проверяет Cheker</h2>
+      <p>Cheker анализирует HTML-страницу и выдаёт структурированный отчёт с пометками «пройдено / предупреждение / ошибка» по каждому параметру.</p>
+
+      <div class="checks-grid">
+        <div class="check-card">
+          <div class="icon">🌐</div>
+          <h3>HTTP-статус</h3>
+          <p>Проверяет доступность страницы и код ответа сервера.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">🔒</div>
+          <h3>HTTPS</h3>
+          <p>Использование защищённого протокола — обязательное требование Google.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">⚡</div>
+          <h3>Время загрузки</h3>
+          <p>Рекомендуемый порог — до 2 с. Медленный сайт теряет позиции.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">📝</div>
+          <h3>Тег &lt;title&gt;</h3>
+          <p>Наличие и длина заголовка страницы (10–70 символов).</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">📄</div>
+          <h3>Meta description</h3>
+          <p>Наличие и длина описания страницы (50–160 символов).</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">🏷️</div>
+          <h3>Тег &lt;h1&gt;</h3>
+          <p>На каждой странице должен быть ровно один тег H1.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">🖼️</div>
+          <h3>Alt у изображений</h3>
+          <p>Все изображения должны иметь текстовое описание (alt).</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">📱</div>
+          <h3>Viewport</h3>
+          <p>Наличие мета-тега для адаптивности на мобильных устройствах.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">🔗</div>
+          <h3>Canonical</h3>
+          <p>Канонический URL предотвращает дублирование контента.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">📊</div>
+          <h3>Open Graph</h3>
+          <p>Теги og:title, og:description, og:image для социальных сетей.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">🤖</div>
+          <h3>robots.txt</h3>
+          <p>Файл инструкций для поисковых роботов на сервере.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">🗺️</div>
+          <h3>sitemap.xml</h3>
+          <p>Карта сайта помогает поисковым системам обходить страницы.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">🌍</div>
+          <h3>Lang</h3>
+          <p>Атрибут lang у тега &lt;html&gt; важен для SEO и доступности.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">🎨</div>
+          <h3>Favicon</h3>
+          <p>Иконка сайта через тег &lt;link&gt; или стандартный /favicon.ico.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">🧩</div>
+          <h3>Structured Data</h3>
+          <p>JSON-LD разметка (Schema.org) для расширенных сниппетов.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">🐦</div>
+          <h3>Twitter Card</h3>
+          <p>Мета-теги twitter:card, twitter:title, twitter:description.</p>
+        </div>
+        <div class="check-card">
+          <div class="icon">📐</div>
+          <h3>Структура заголовков</h3>
+          <p>Корректная иерархия h1–h6 без пропущенных уровней.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- How to use online -->
+    <section id="online" aria-labelledby="online-heading">
+      <h2 id="online-heading">Проверка сайта без программирования</h2>
+      <p>Запустить проверку можно прямо в браузере — без установки Python и без командной строки.</p>
+      <ol class="steps">
+        <li>Откройте вкладку <strong>Actions</strong> в этом репозитории.</li>
+        <li>В левой панели выберите <strong>«Проверка сайта»</strong>.</li>
+        <li>Нажмите <strong>«Run workflow»</strong> (зелёная кнопка справа).</li>
+        <li>Введите URL сайта, например <code>pacificstar.ru</code>, и нажмите <strong>«Run workflow»</strong>.</li>
+        <li>Дождитесь завершения задания (обычно 1–2 минуты).</li>
+        <li>Откройте завершённое задание — в разделе <strong>«Summary»</strong> отобразится полный отчёт. Файл <code>report.txt</code> доступен для скачивания 30 дней.</li>
+      </ol>
+    </section>
+
+    <!-- Installation -->
+    <section id="install" aria-labelledby="install-heading">
+      <h2 id="install-heading">Установка и локальный запуск</h2>
+      <h3>1. Установить зависимости</h3>
+      <pre>pip install -r requirements.txt</pre>
+      <h3>2. Запустить проверку</h3>
+      <pre>python cli.py https://example.com</pre>
+      <p>Можно указать URL без схемы — <code>https://</code> будет добавлен автоматически:</p>
+      <pre>python cli.py example.com</pre>
+
+      <h3>Параметры</h3>
+      <ul style="margin-left:1.5rem;margin-top:0.5rem;">
+        <li><code>--no-color</code> — отключить цветной вывод</li>
+        <li><code>--repeat</code> / <code>-r</code> — повторить последнюю проверку</li>
+      </ul>
+    </section>
+
+    <!-- Sample output -->
+    <section id="output" aria-labelledby="output-heading">
+      <h2 id="output-heading">Пример вывода</h2>
+      <div class="result-block" role="region" aria-label="Пример вывода программы Cheker">
+        <div>════════════════════════════════════════════════════════════</div>
+        <div>  Cheker — отчёт по сайту</div>
+        <div>════════════════════════════════════════════════════════════</div>
+        <div>  URL:           https://example.com</div>
+        <div>  HTTP-статус:   200</div>
+        <div>  Время загрузки: 0.43 с</div>
+        <div>────────────────────────────────────────────────────────────</div>
+        <div class="ok">  ✓  Страница доступна (HTTP 200)</div>
+        <div class="ok">  ✓  Сайт использует HTTPS</div>
+        <div class="ok">  ✓  Время загрузки: 0.43 с (отлично)</div>
+        <div class="ok">  ✓  Тег &lt;title&gt; в норме (28 симв.): «Example Domain»</div>
+        <div class="warn">  !  Meta description отсутствует</div>
+        <div class="ok">  ✓  Тег &lt;h1&gt; присутствует: «Example Domain»</div>
+        <div class="ok">  ✓  Изображений на странице нет</div>
+        <div class="warn">  !  Мета-тег viewport отсутствует</div>
+        <div class="warn">  !  Canonical-ссылка отсутствует</div>
+        <div class="warn">  !  Отсутствуют Open Graph теги: og:title, og:description, og:image</div>
+        <div>────────────────────────────────────────────────────────────</div>
+        <div class="score">  Оценка: 50/100</div>
+        <div>  Пройдено: 6/12  |  Ошибок: 1  |  Предупреждений: 4</div>
+        <div>════════════════════════════════════════════════════════════</div>
+      </div>
+    </section>
+
+    <!-- Use as library -->
+    <section id="library" aria-labelledby="library-heading">
+      <h2 id="library-heading">Использование как библиотека</h2>
+      <pre>from checker import analyze
+
+report = analyze("https://example.com")
+print(f"Оценка: {report.score}/100")
+for check in report.checks:
+    status = "✓" if check.passed else "✗"
+    print(f"  {status} {check.message}")</pre>
+    </section>
+
+  </main>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <p>
+      Cheker — открытый проект.
+      <a href="https://github.com/bossssmann-ui/Cheker">GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="https://github.com/bossssmann-ui/Cheker/actions/workflows/check.yml">Запустить проверку</a>
+    </p>
+  </footer>
+
+</body>
+</html>
