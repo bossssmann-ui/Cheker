@@ -55,7 +55,14 @@ jobs:
       - name: Сохранить результаты в сводку задания
         run: |
           URL="${{ steps.set-url.outputs.url }}"
+          EXIT_CODE="${{ steps.run-check.outputs.exit_code }}"
           echo "## Результаты проверки сайта \`$URL\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$EXIT_CODE" = "0" ]; then
+            echo "### ✅ Сайт прошёл проверку" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ⚠️ Найдены ошибки на сайте" >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           cat report.txt >> "$GITHUB_STEP_SUMMARY"
@@ -74,5 +81,3 @@ jobs:
           path: report.txt
           retention-days: 30
 
-      - name: Завершить с кодом проверки
-        run: exit ${{ steps.run-check.outputs.exit_code }}
