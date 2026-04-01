@@ -10,7 +10,7 @@ prompt — системный промпт и конфигурация AI-кон
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import List
 
 
 # ---------------------------------------------------------------------------
